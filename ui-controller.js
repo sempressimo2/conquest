@@ -83,6 +83,15 @@ class UIController {
         });
     }
     
+    getResourceIcon(type) {
+        switch(type) {
+            case 'food': return '🍎';
+            case 'materials': return '🧱';
+            case 'gold': return '💰';
+            default: return '⚖️'; // balanced
+        }
+    }
+
     handleCellSelection(cell) {
         // Deselect previous cells
         if (this.selectedCell) {
@@ -124,11 +133,11 @@ class UIController {
         if (cell.resourceType === 'gold') resourceType = "Gold";
         
         this.cellDetailsElement.innerHTML = `
-            <p><strong>Population:</strong> ${cell.population}/${cell.populationCapacity}</p>
-            <p><strong>Troops:</strong> ${cell.troops}</p>
-            <p><strong>Fortification:</strong> ${cell.fortification}</p>
-            <p><strong>Resource Type:</strong> ${resourceType} (Level ${cell.resourceLevel})</p>
-            <p><strong>Actions Remaining:</strong> ${currentFaction.actionsRemaining}</p>
+            <p><strong>👥 Population:</strong> ${cell.population}/${cell.populationCapacity}</p>
+            <p><strong>⚔️ Troops:</strong> ${cell.troops}</p>
+            <p><strong>🛡️ Fortification:</strong> ${cell.fortification}</p>
+            <p><strong>${this.getResourceIcon(cell.resourceType)} Resource Type:</strong> ${resourceType} (Level ${cell.resourceLevel})</p>
+            <p><strong>⚡ Actions Remaining:</strong> ${currentFaction.actionsRemaining}</p>
         `;
         
         // Action buttons
