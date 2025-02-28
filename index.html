@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turn-Based Strategy Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 100vmin;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .faction-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .faction-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        
+        .faction-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .turn-info {
+            font-size: 14px;
+        }
+        
+        .resource-bar {
+            display: flex;
+            justify-content: space-between;
+            background-color: white;
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .resource {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+        }
+        
+        .resource-icon {
+            font-size: 16px;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            background-color: #333;
+            padding: 2px;
+            border-radius: 5px;
+            aspect-ratio: 1;
+            margin-bottom: 10px;
+        }
+        
+        .cell {
+            background-color: #eee;
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .cell:active {
+            transform: scale(0.95);
+        }
+        
+        .cell-selected {
+            box-shadow: 0 0 0 2px white, 0 0 0 4px black;
+            z-index: 3;
+        }
+        
+        .cell-faction-0 { background-color: #b3cde0; }
+        .cell-faction-1 { background-color: #fbb4ae; }
+        .cell-faction-2 { background-color: #ccebc5; }
+        .cell-faction-3 { background-color: #decbe4; }
+        
+		.cell-info {
+			position: absolute;
+			top: 2px;
+			left: 2px;
+			right: 2px;
+			display: flex;
+			justify-content: space-between;
+			font-size: 12px; /* Increased from 9px */
+			font-weight: bold;
+		}
+		
+		.cell-resource {
+			position: absolute;
+			bottom: 2px;
+			left: 2px;
+			font-size: 12px; /* Increased from 9px */
+		}
+
+		.cell-troops {
+			position: absolute;
+			bottom: 2px;
+			right: 2px;
+			font-size: 12px; /* Increased from 9px */
+			font-weight: bold;
+		}
+        
+        .end-turn-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* Popup styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 10;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .popup {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 350px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .popup-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .close-popup {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .cell-details {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .action-button {
+            padding: 12px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .action-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .attack-target {
+            background-color: #e74c3c;
+        }
+        
+        .message-log {
+            background-color: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .message {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        /* Make game log collapsible */
+        .message-log.collapsed {
+            max-height: 40px;
+            overflow: hidden;
+        }
+        
+        .toggle-log {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="faction-info">
+                <div class="faction-color" id="currentFactionColor"></div>
+                <div class="faction-name" id="currentFactionName">Faction 1</div>
+            </div>
+            <div class="turn-info">Turn: <span id="turnCounter">1</span></div>
+        </div>
+        
+        <div class="resource-bar">
+            <div class="resource">
+                <div class="resource-icon">🍎</div>
+                <div id="foodAmount">0</div>
+                <div>Food</div>
+            </div>
+            <div class="resource">
+                <div class="resource-icon">🧱</div>
+                <div id="materialAmount">0</div>
+                <div>Materials</div>
+            </div>
+            <div class="resource">
+                <div class="resource-icon">💰</div>
+                <div id="goldAmount">0</div>
+                <div>Gold</div>
+            </div>
+            <div class="resource">
+                <div class="resource-icon">👥</div>
+                <div id="populationAmount">0</div>
+                <div>Population</div>
+            </div>
+        </div>
+        
+        <div class="game-board" id="gameBoard"></div>
+        
+        <button class="end-turn-button" id="endTurnBtn">End Turn</button>
+        
+        <div class="message-log collapsed" id="messageLog">
+            <div class="message-header">
+                <h3>Game Log</h3>
+                <button class="toggle-log" id="toggleLogBtn">▼</button>
+            </div>
+            <div id="messages"></div>
+        </div>
+    </div>
+    
+    <!-- Cell Action Popup -->
+    <div class="popup-overlay" id="cellPopup">
+        <div class="popup">
+            <div class="popup-header">
+                <div class="popup-title" id="popupTitle">Cell Actions</div>
+                <button class="close-popup" id="closePopup">×</button>
+            </div>
+            <div class="cell-details" id="cellDetails"></div>
+            <div class="action-buttons" id="actionButtons"></div>
+        </div>
+    </div>
+
+    <script>
+        // Game classes
+        class Grid {
+            constructor(size) {
+                this.size = size;
+                this.cells = [];
+                
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        this.cells.push(new Cell(x, y));
+                    }
+                }
+            }
+            
+            getCell(x, y) {
+                if (x < 0 || x >= this.size || y < 0 || y >= this.size) return null;
+                return this.cells[y * this.size + x];
+            }
+            
+            getAdjacentCells(cell) {
+                const adjacentCells = [];
+                const directions = [
+                    {x: 0, y: -1}, // Up
+                    {x: 1, y: 0},  // Right
+                    {x: 0, y: 1},  // Down
+                    {x: -1, y: 0}   // Left
+                ];
+                
+                for (const dir of directions) {
+                    const adjacentCell = this.getCell(cell.x + dir.x, cell.y + dir.y);
+                    if (adjacentCell) adjacentCells.push(adjacentCell);
+                }
+                
+                return adjacentCells;
+            }
+            
+            getCellsByFaction(factionId) {
+                return this.cells.filter(cell => cell.ownerId === factionId);
+            }
+        }
+        
+        class Cell {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.ownerId = -1; // -1 for neutral
+                this.resourceType = 'balanced'; // 'food', 'materials', 'gold', or 'balanced'
+                this.resourceLevel = 1;
+                this.population = 0;
+                this.populationCapacity = 10;
+                this.troops = 0;
+                this.fortification = 0;
+                this.element = null; // DOM reference
+            }
+            
+            assignToFaction(factionId) {
+                this.ownerId = factionId;
+                this.population = 5;
+                this.updateElement();
+            }
+            
+            getResourceProduction() {
+                const baseProduction = {
+                    food: 1,
+                    materials: 1,
+                    gold: 1
+                };
+                
+                switch (this.resourceType) {
+                    case 'food':
+                        baseProduction.food = 3 * this.resourceLevel;
+                        break;
+                    case 'materials':
+                        baseProduction.materials = 3 * this.resourceLevel;
+                        break;
+                    case 'gold':
+                        baseProduction.gold = 3 * this.resourceLevel;
+                        break;
+                    case 'balanced':
+                        baseProduction.food = 2 * this.resourceLevel;
+                        baseProduction.materials = 2 * this.resourceLevel;
+                        baseProduction.gold = 2 * this.resourceLevel;
+                        break;
+                }
+                
+                return baseProduction;
+            }
+            
+            upgradeResource(type) {
+                this.resourceType = type;
+                this.resourceLevel++;
+                this.updateElement();
+            }
+            
+            upgradeFortification() {
+                this.fortification++;
+                this.updateElement();
+            }
+            
+            growPopulation() {
+                if (this.population < this.populationCapacity) {
+                    this.population += 1;
+                }
+                this.updateElement();
+            }
+            
+            recruitTroops(amount) {
+                const actualAmount = Math.min(amount, this.population);
+                this.population -= actualAmount;
+                this.troops += actualAmount;
+                this.updateElement();
+                return actualAmount;
+            }
+            
+            getDefenseStrength() {
+                return this.troops + (this.fortification * 3);
+            }
+            
+            updateElement() {
+                if (!this.element) return;
+                
+                // Update CSS classes
+                this.element.className = 'cell';
+                if (this.ownerId >= 0) {
+                    this.element.classList.add(`cell-faction-${this.ownerId}`);
+                }
+                
+                // Update content
+                let resourceIcon = '⚖️'; // Balanced
+                if (this.resourceType === 'food') resourceIcon = '🍎';
+                if (this.resourceType === 'materials') resourceIcon = '🧱';
+                if (this.resourceType === 'gold') resourceIcon = '💰';
+                
+                this.element.innerHTML = `
+                    <div class="cell-info">
+                        <span>${this.population}/${this.populationCapacity}</span>
+                        <span>${this.fortification > 0 ? '🛡️' + this.fortification : ''}</span>
+                    </div>
+                    <div class="cell-resource">${resourceIcon} ${this.resourceLevel}</div>
+                    <div class="cell-troops">${this.troops > 0 ? '⚔️' + this.troops : ''}</div>
+                `;
+            }
+        }
+        
+        class Faction {
+            constructor(id, name, color, trait = '') {
+                this.id = id;
+                this.name = name;
+                this.color = color;
+                this.trait = trait;
+                this.resources = {
+                    food: 20,
+                    materials: 20,
+                    gold: 10
+                };
+                this.actionsRemaining = 3;
+            }
+            
+            resetActions() {
+                this.actionsRemaining = 3;
+            }
+            
+            useAction() {
+                if (this.actionsRemaining > 0) {
+                    this.actionsRemaining--;
+                    return true;
+                }
+                return false;
+            }
+            
+            addResources(resources) {
+                this.resources.food += resources.food;
+                this.resources.materials += resources.materials;
+                this.resources.gold += resources.gold;
+            }
+            
+            canAfford(cost) {
+                return this.resources.food >= cost.food && 
+                       this.resources.materials >= cost.materials && 
+                       this.resources.gold >= cost.gold;
+            }
+            
+            pay(cost) {
+                if (!this.canAfford(cost)) return false;
+                
+                this.resources.food -= cost.food;
+                this.resources.materials -= cost.materials;
+                this.resources.gold -= cost.gold;
+                return true;
+            }
+            
+            getTotalPopulation(grid) {
+                return grid.getCellsByFaction(this.id)
+                    .reduce((total, cell) => total + cell.population, 0);
+            }
+            
+            getTotalTroops(grid) {
+                return grid.getCellsByFaction(this.id)
+                    .reduce((total, cell) => total + cell.troops, 0);
+            }
+        }
+        
+        class CombatSystem {
+            static resolveAttack(attackingCell, defendingCell) {
+                const attackStrength = attackingCell.troops;
+                const defenseStrength = defendingCell.getDefenseStrength();
+                
+                // Simple combat formula with some randomization
+                const attackEffectiveness = Math.random() * 0.4 + 0.8; // 0.8 to 1.2
+                const defenseEffectiveness = Math.random() * 0.4 + 0.8; // 0.8 to 1.2
+                
+                const adjustedAttack = attackStrength * attackEffectiveness;
+                const adjustedDefense = defenseStrength * defenseEffectiveness;
+                
+                let attackerLosses = Math.round((adjustedDefense / (adjustedAttack + adjustedDefense)) * attackStrength * 0.8);
+                let defenderLosses = Math.round((adjustedAttack / (adjustedAttack + adjustedDefense)) * defendingCell.troops * 0.8);
+                
+                // Ensure losses don't exceed available troops
+                attackerLosses = Math.min(attackerLosses, attackingCell.troops);
+                defenderLosses = Math.min(defenderLosses, defendingCell.troops);
+                
+                // Calculate remaining troops
+                const attackerRemaining = attackingCell.troops - attackerLosses;
+                const defenderRemaining = defendingCell.troops - defenderLosses;
+                
+                // Determine winner
+                const attackerWins = adjustedAttack > adjustedDefense;
+                
+                return {
+                    attackerLosses,
+                    defenderLosses,
+                    attackerRemaining,
+                    defenderRemaining,
+                    attackerWins
+                };
+            }
+        }
+        
+        class GameStateManager {
+            constructor(grid, factions) {
+                this.grid = grid;
+                this.factions = factions;
+                this.currentFactionIndex = 0;
+                this.turn = 1;
+                this.gameOver = false;
+                this.winner = null;
+            }
+            
+            getCurrentFaction() {
+                return this.factions[this.currentFactionIndex];
+            }
+            
+            nextTurn() {
+                this.currentFactionIndex = (this.currentFactionIndex + 1) % this.factions.length;
+                
+                if (this.currentFactionIndex === 0) {
+                    this.turn++;
+                    this.collectResources();
+                    this.growPopulation();
+                }
+                
+                this.getCurrentFaction().resetActions();
+                this.checkVictoryConditions();
+                
+                return {
+                    faction: this.getCurrentFaction(),
+                    turn: this.turn,
+                    gameOver: this.gameOver,
+                    winner: this.winner
+                };
+            }
+            
+            collectResources() {
+                for (const faction of this.factions) {
+                    let totalResources = { food: 0, materials: 0, gold: 0 };
+                    
+                    for (const cell of this.grid.getCellsByFaction(faction.id)) {
+                        const resources = cell.getResourceProduction();
+                        totalResources.food += resources.food;
+                        totalResources.materials += resources.materials;
+                        totalResources.gold += resources.gold;
+                    }
+                    
+                    faction.addResources(totalResources);
+                }
+            }
+            
+            growPopulation() {
+                for (const cell of this.grid.cells) {
+                    if (cell.ownerId >= 0) {
+                        cell.growPopulation();
+                    }
+                }
+            }
+            
+            checkVictoryConditions() {
+                const activeFactions = this.factions.filter(faction => 
+                    this.grid.getCellsByFaction(faction.id).length > 0
+                );
+                
+                if (activeFactions.length === 1) {
+                    this.gameOver = true;
+                    this.winner = activeFactions[0];
+                }
+            }
+            
+            initializeGame() {
+                // Create starting territories for each faction
+                for (let i = 0; i < this.factions.length; i++) {
+                    const faction = this.factions[i];
+                    
+                    // Simple placement - corners for now
+                    let x, y;
+                    switch (i) {
+                        case 0: // Top left
+                            x = 0; y = 0;
+                            break;
+                        case 1: // Top right
+                            x = this.grid.size - 1; y = 0;
+                            break;
+                        case 2: // Bottom left
+                            x = 0; y = this.grid.size - 1;
+                            break;
+                        case 3: // Bottom right
+                            x = this.grid.size - 1; y = this.grid.size - 1;
+                            break;
+                    }
+                    
+                    // Assign initial cells
+                    this.grid.getCell(x, y).assignToFaction(faction.id);
+                    this.grid.getCell(x + (i % 2 === 0 ? 1 : -1), y).assignToFaction(faction.id);
+                    this.grid.getCell(x, y + (i < 2 ? 1 : -1)).assignToFaction(faction.id);
+                }
+            }
+        }
+        
+        class UIController {
+            constructor(game) {
+                this.game = game;
+                this.selectedCell = null;
+                this.targetCell = null;
+                
+                // UI elements
+                this.gameBoardElement = document.getElementById('gameBoard');
+                this.currentFactionColorElement = document.getElementById('currentFactionColor');
+                this.currentFactionNameElement = document.getElementById('currentFactionName');
+                this.foodAmountElement = document.getElementById('foodAmount');
+                this.materialAmountElement = document.getElementById('materialAmount');
+                this.goldAmountElement = document.getElementById('goldAmount');
+                this.populationAmountElement = document.getElementById('populationAmount');
+                this.turnCounterElement = document.getElementById('turnCounter');
+                this.messagesElement = document.getElementById('messages');
+                this.endTurnBtn = document.getElementById('endTurnBtn');
+                this.messageLogElement = document.getElementById('messageLog');
+                this.toggleLogBtn = document.getElementById('toggleLogBtn');
+                
+                // Popup elements
+                this.cellPopupElement = document.getElementById('cellPopup');
+                this.popupTitleElement = document.getElementById('popupTitle');
+                this.cellDetailsElement = document.getElementById('cellDetails');
+                this.actionButtonsElement = document.getElementById('actionButtons');
+                this.closePopupButton = document.getElementById('closePopup');
+                
+                this.setupEventListeners();
+                this.createGrid();
+                this.updateUI();
+            }
+            
+            createGrid() {
+                this.gameBoardElement.innerHTML = '';
+                this.gameBoardElement.style.gridTemplateColumns = `repeat(${this.game.grid.size}, 1fr)`;
+                this.gameBoardElement.style.gridTemplateRows = `repeat(${this.game.grid.size}, 1fr)`;
+                
+                for (const cell of this.game.grid.cells) {
+                    const cellElement = document.createElement('div');
+                    cellElement.className = 'cell';
+                    cellElement.dataset.x = cell.x;
+                    cellElement.dataset.y = cell.y;
+                    
+                    cell.element = cellElement;
+                    cell.updateElement();
+                    
+                    this.gameBoardElement.appendChild(cellElement);
+                }
+            }
+            
+            setupEventListeners() {
+                // Cell selection
+                this.gameBoardElement.addEventListener('click', (e) => {
+                    const cellElement = e.target.closest('.cell');
+                    if (!cellElement) return;
+                    
+                    const x = parseInt(cellElement.dataset.x);
+                    const y = parseInt(cellElement.dataset.y);
+                    const cell = this.game.grid.getCell(x, y);
+                    
+                    this.handleCellSelection(cell);
+                });
+                
+                // End turn button
+                this.endTurnBtn.addEventListener('click', () => this.handleEndTurn());
+                
+                // Close popup button
+                this.closePopupButton.addEventListener('click', () => {
+                    this.cellPopupElement.style.display = 'none';
+                });
+                
+                // Outside popup click closes popup
+                this.cellPopupElement.addEventListener('click', (e) => {
+                    if (e.target === this.cellPopupElement) {
+                        this.cellPopupElement.style.display = 'none';
+                    }
+                });
+                
+                // Toggle log
+                this.toggleLogBtn.addEventListener('click', () => {
+                    this.messageLogElement.classList.toggle('collapsed');
+                    this.toggleLogBtn.textContent = this.messageLogElement.classList.contains('collapsed') ? '▼' : '▲';
+                });
+            }
+            
+            handleCellSelection(cell) {
+                // Deselect previous cells
+                if (this.selectedCell) {
+                    this.selectedCell.element.classList.remove('cell-selected');
+                }
+                
+                // If selecting a cell owned by current faction
+                if (cell.ownerId === this.game.getCurrentFaction().id) {
+                    this.selectedCell = cell;
+                    this.targetCell = null;
+                    cell.element.classList.add('cell-selected');
+                    this.showCellActionPopup(cell);
+                } 
+                // If selecting a target cell while having a selected cell
+                else if (this.selectedCell) {
+                    const adjacentCells = this.game.grid.getAdjacentCells(this.selectedCell);
+                    if (adjacentCells.includes(cell)) {
+                        this.targetCell = cell;
+                        this.showAttackPopup(this.selectedCell, cell);
+                    } else {
+                        this.addMessage("You can only attack adjacent cells.");
+                    }
+                } else {
+                    // Show info about non-owned cell
+                    this.showCellInfoPopup(cell);
+                }
+            }
+            
+            showCellActionPopup(cell) {
+                const currentFaction = this.game.getCurrentFaction();
+                const hasActions = currentFaction.actionsRemaining > 0;
+                
+                this.popupTitleElement.textContent = `Your Cell (${cell.x}, ${cell.y})`;
+                
+                // Cell details
+                let resourceType = "Balanced";
+                if (cell.resourceType === 'food') resourceType = "Food";
+                if (cell.resourceType === 'materials') resourceType = "Materials";
+                if (cell.resourceType === 'gold') resourceType = "Gold";
+                
+                this.cellDetailsElement.innerHTML = `
+                    <p><strong>Population:</strong> ${cell.population}/${cell.populationCapacity}</p>
+                    <p><strong>Troops:</strong> ${cell.troops}</p>
+                    <p><strong>Fortification:</strong> ${cell.fortification}</p>
+                    <p><strong>Resource Type:</strong> ${resourceType} (Level ${cell.resourceLevel})</p>
+                    <p><strong>Actions Remaining:</strong> ${currentFaction.actionsRemaining}</p>
+                `;
+                
+                // Action buttons
+                this.actionButtonsElement.innerHTML = '';
+                
+                const canAffordRecruit = currentFaction.resources.food >= 10 && cell.population > 0;
+                const canAffordUpgrade = currentFaction.resources.materials >= 10;
+                const canAffordFortify = currentFaction.resources.materials >= 15;
+                
+                const recruitBtn = this.createActionButton(
+                    'Recruit Troops (10 Food)', 
+                    !hasActions || !canAffordRecruit,
+                    () => this.handleRecruit()
+                );
+                
+                const upgradeFoodBtn = this.createActionButton(
+                    'Upgrade Food (10 Materials)', 
+                    !hasActions || !canAffordUpgrade,
+                    () => this.handleUpgradeResource('food')
+                );
+                
+                const upgradeMaterialsBtn = this.createActionButton(
+                    'Upgrade Materials (10 Materials)', 
+                    !hasActions || !canAffordUpgrade,
+                    () => this.handleUpgradeResource('materials')
+                );
+                
+                const upgradeGoldBtn = this.createActionButton(
+                    'Upgrade Gold (10 Materials)', 
+                    !hasActions || !canAffordUpgrade,
+                    () => this.handleUpgradeResource('gold')
+                );
+                
+                const fortifyBtn = this.createActionButton(
+                    'Fortify (15 Materials)', 
+                    !hasActions || !canAffordFortify,
+                    () => this.handleFortify()
+                );
+                
+                this.actionButtonsElement.appendChild(recruitBtn);
+                this.actionButtonsElement.appendChild(upgradeFoodBtn);
+                this.actionButtonsElement.appendChild(upgradeMaterialsBtn);
+                this.actionButtonsElement.appendChild(upgradeGoldBtn);
+                this.actionButtonsElement.appendChild(fortifyBtn);
+                
+                // Show popup
+                this.cellPopupElement.style.display = 'flex';
+            }
+            
+            showAttackPopup(fromCell, toCell) {
+                const currentFaction = this.game.getCurrentFaction();
+                const hasActions = currentFaction.actionsRemaining > 0;
+                
+                this.popupTitleElement.textContent = 'Attack Cell';
+                
+                // Cell details
+                let targetOwner = "Neutral";
+                if (toCell.ownerId >= 0) {
+                    targetOwner = `Faction ${toCell.ownerId + 1}`;
+                }
+                
+                this.cellDetailsElement.innerHTML = `
+                    <p><strong>From:</strong> Cell (${fromCell.x}, ${fromCell.y}) with ${fromCell.troops} troops</p>
+                    <p><strong>To:</strong> Cell (${toCell.x}, ${toCell.y})</p>
+                    <p><strong>Target Owner:</strong> ${targetOwner}</p>
+                    <p><strong>Target Troops:</strong> ${toCell.troops}</p>
+                    <p><strong>Target Fortification:</strong> ${toCell.fortification}</p>
+                    <p><strong>Actions Remaining:</strong> ${currentFaction.actionsRemaining}</p>
+                `;
+                
+                // Action buttons
+                this.actionButtonsElement.innerHTML = '';
+                
+                const canAttack = fromCell.troops > 0 && hasActions;
+                
+                const attackBtn = this.createActionButton(
+                    'Attack Cell', 
+                    !canAttack,
+                    () => this.handleAttack()
+                );
+                
+                attackBtn.classList.add('attack-target');
+                this.actionButtonsElement.appendChild(attackBtn);
+                
+                // Show popup
+                this.cellPopupElement.style.display = 'flex';
+            }
+            
+            showCellInfoPopup(cell) {
+                let owner = "Neutral";
+                if (cell.ownerId >= 0) {
+                    owner = `Faction ${cell.ownerId + 1}`;
+                }
+                
+                this.popupTitleElement.textContent = `Cell Info (${cell.x}, ${cell.y})`;
+                
+                // Cell details
+                let resourceType = "Balanced";
+                if (cell.resourceType === 'food') resourceType = "Food";
+                if (cell.resourceType === 'materials') resourceType = "Materials";
+                if (cell.resourceType === 'gold') resourceType = "Gold";
+                
+                this.cellDetailsElement.innerHTML = `
+                    <p><strong>Owner:</strong> ${owner}</p>
+                    <p><strong>Population:</strong> ${cell.population}/${cell.populationCapacity}</p>
+                    <p><strong>Troops:</strong> ${cell.troops}</p>
+                    <p><strong>Fortification:</strong> ${cell.fortification}</p>
+                    <p><strong>Resource Type:</strong> ${resourceType} (Level ${cell.resourceLevel})</p>
+                `;
+                
+                // No action buttons for enemy/neutral cell
+                this.actionButtonsElement.innerHTML = '';
+                
+                // Show popup
+                this.cellPopupElement.style.display = 'flex';
+            }
+            
+            createActionButton(text, disabled, clickHandler) {
+                const button = document.createElement('button');
+                button.className = 'action-button';
+                button.textContent = text;
+                button.disabled = disabled;
+                
+                if (!disabled) {
+                    button.addEventListener('click', () => {
+                        clickHandler();
+                        this.cellPopupElement.style.display = 'none';
+                    });
+                }
+                
+                return button;
+            }
+            
+            handleRecruit() {
+                if (!this.selectedCell || !this.game.getCurrentFaction().useAction()) return;
+                
+                const cost = { food: 10, materials: 0, gold: 0 };
+                if (!this.game.getCurrentFaction().pay(cost)) {
+                    this.addMessage("Not enough resources to recruit troops.");
+                    return;
+                }
+                
+                const troopsRecruited = this.selectedCell.recruitTroops(5);
+                this.addMessage(`Recruited ${troopsRecruited} troops in cell (${this.selectedCell.x}, ${this.selectedCell.y}).`);
+                this.updateUI();
+            }
+            
+            handleUpgradeResource(type) {
+                if (!this.selectedCell || !this.game.getCurrentFaction().useAction()) return;
+                
+                const cost = { food: 0, materials: 10, gold: 0 };
+                if (!this.game.getCurrentFaction().pay(cost)) {
+                    this.addMessage("Not enough resources to upgrade.");
+                    return;
+                }
+                
+                this.selectedCell.upgradeResource(type);
+                this.addMessage(`Upgraded cell (${this.selectedCell.x}, ${this.selectedCell.y}) to produce more ${type}.`);
+                this.updateUI();
+            }
+            
+            handleFortify() {
+                if (!this.selectedCell || !this.game.getCurrentFaction().useAction()) return;
+                
+                const cost = { food: 0, materials: 15, gold: 0 };
+                if (!this.game.getCurrentFaction().pay(cost)) {
+                    this.addMessage("Not enough resources to fortify.");
+                    return;
+                }
+                
+                this.selectedCell.upgradeFortification();
+                this.addMessage(`Fortified cell (${this.selectedCell.x}, ${this.selectedCell.y}).`);
+                this.updateUI();
+            }
+            
+            handleAttack() {
+                if (!this.selectedCell || !this.targetCell || this.selectedCell.troops === 0 || !this.game.getCurrentFaction().useAction()) return;
+                
+                const result = CombatSystem.resolveAttack(this.selectedCell, this.targetCell);
+                
+                // Update troops
+                this.selectedCell.troops -= result.attackerLosses;
+                this.targetCell.troops -= result.defenderLosses;
+                
+                // Handle conquest
+                if (result.attackerWins) {
+                    const previousOwner = this.targetCell.ownerId;
+                    this.targetCell.ownerId = this.game.getCurrentFaction().id;
+                    this.targetCell.troops = result.attackerRemaining;
+                    this.selectedCell.troops = 0;
+                    
+                    this.addMessage(`Conquered cell (${this.targetCell.x}, ${this.targetCell.y}) from ${previousOwner >= 0 ? `Faction ${previousOwner + 1}` : 'Neutral'}.`);
+                } else {
+                    this.addMessage(`Attack on cell (${this.targetCell.x}, ${this.targetCell.y}) failed.`);
+                }
+                
+                this.targetCell.updateElement();
+                this.selectedCell.updateElement();
+                this.targetCell = null;
+                this.updateUI();
+            }
+            
+            handleEndTurn() {
+                const turnInfo = this.game.nextTurn();
+                
+                if (turnInfo.gameOver) {
+                    alert(`Game over! ${turnInfo.winner.name} has won!`);
+                    // You might want to reset the game or show a game over screen
+                } else {
+                    this.addMessage(`Turn ${turnInfo.turn} - ${turnInfo.faction.name}'s turn.`);
+                    this.selectedCell = null;
+                    this.targetCell = null;
+                    this.updateUI();
+                }
+            }
+            
+            updateUI() {
+                const currentFaction = this.game.getCurrentFaction();
+                
+                // Update faction info
+                this.currentFactionColorElement.style.backgroundColor = currentFaction.color;
+                this.currentFactionNameElement.textContent = currentFaction.name;
+                
+                // Update resource display
+                this.foodAmountElement.textContent = currentFaction.resources.food;
+                this.materialAmountElement.textContent = currentFaction.resources.materials;
+                this.goldAmountElement.textContent = currentFaction.resources.gold;
+                this.populationAmountElement.textContent = currentFaction.getTotalPopulation(this.game.grid);
+                
+                // Update turn counter
+                this.turnCounterElement.textContent = this.game.turn;
+            }
+            
+            addMessage(message) {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.textContent = message;
+                this.messagesElement.appendChild(messageElement);
+                this.messagesElement.scrollTop = this.messagesElement.scrollHeight;
+                
+                // Show log if it's collapsed
+                this.messageLogElement.classList.remove('collapsed');
+                this.toggleLogBtn.textContent = '▲';
+            }
+        }
+        
+        class Game {
+            constructor() {
+                // Create grid (8x8)
+                this.grid = new Grid(8);
+                
+                // Create factions
+                this.factions = [
+                    new Faction(0, "Faction 1", "#b3cde0", "Economic"),
+                    new Faction(1, "Faction 2", "#fbb4ae", "Military"),
+                    new Faction(2, "Faction 3", "#ccebc5", "Population"),
+                    new Faction(3, "Faction 4", "#decbe4", "Technology")
+                ];
+                
+                // Create game state manager
+                this.gameState = new GameStateManager(this.grid, this.factions);
+                
+                // Initialize game
+                this.gameState.initializeGame();
+                
+                // Create UI controller
+                this.ui = new UIController(this.gameState);
+                
+                // Start message
+                this.ui.addMessage("Game started. Faction 1's turn.");
+            }
+            
+            getCurrentFaction() {
+                return this.gameState.getCurrentFaction();
+            }
+            
+            nextTurn() {
+                return this.gameState.nextTurn();
+            }
+        }
+        
+        // Start the game when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            const game = new Game();
+        });
+    </script>
+</body>
+</html>
