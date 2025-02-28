@@ -179,9 +179,9 @@ class UIController {
         this.actionButtonsElement.appendChild(upgradeGoldBtn);
         this.actionButtonsElement.appendChild(fortifyBtn);
         
-        // Add End Turn button
         const endTurnBtn = document.createElement('button');
         endTurnBtn.className = 'action-button end-turn-button';
+        endTurnBtn.style.backgroundColor = '#4caf50'; // Force green color
         endTurnBtn.textContent = 'End Turn';
         endTurnBtn.addEventListener('click', () => {
             this.handleEndTurn();
