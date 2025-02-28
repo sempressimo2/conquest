@@ -181,8 +181,17 @@ class UIController {
         
         const endTurnBtn = document.createElement('button');
         endTurnBtn.className = 'action-button end-turn-button';
-        endTurnBtn.style.backgroundColor = '#4caf50'; // Force green color
         endTurnBtn.textContent = 'End Turn';
+        
+        // Get current faction color
+        const factionColor = this.game.getCurrentFaction().color;
+        
+        // Set button color to faction color
+        endTurnBtn.style.backgroundColor = factionColor;
+        
+        // Adjust text color for readability based on background brightness
+        endTurnBtn.style.color = this.isLightColor(factionColor) ? 'black' : 'white';
+        
         endTurnBtn.addEventListener('click', () => {
             this.handleEndTurn();
             this.cellPopupElement.style.display = 'none';
@@ -466,6 +475,20 @@ class UIController {
         this.showBattleVisualization(this.selectedCell, this.targetCell);
     }
     
+    isLightColor(color) {
+        // Extract RGB components
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Calculate perceived brightness
+        const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // If brightness is greater than 0.5, consider it a light color
+        return brightness > 0.5;
+    }
+
     showBattleVisualization(attackingCell, defendingCell) {
         // Check if it's a neutral territory with 0 troops - skip animation
         if (defendingCell.ownerId === -1 && defendingCell.troops === 0) {
