@@ -458,4 +458,214 @@ class UIController {
         this.messageLogElement.classList.remove('collapsed');
         this.toggleLogBtn.textContent = '▲';
     }
+
+    handleAttack() {
+        if (!this.selectedCell || !this.targetCell || this.selectedCell.troops === 0 || !this.game.getCurrentFaction().useAction()) return;
+        
+        // Instead of immediately resolving combat, show battle visualization
+        this.showBattleVisualization(this.selectedCell, this.targetCell);
+    }
+    
+    showBattleVisualization(attackingCell, defendingCell) {
+        const attacker = {
+            faction: this.game.factions[attackingCell.ownerId],
+            troops: attackingCell.troops,
+            cell: attackingCell
+        };
+        
+        const defender = {
+            faction: defendingCell.ownerId >= 0 ? this.game.factions[defendingCell.ownerId] : { name: "Neutral", color: "#999" },
+            troops: defendingCell.troops,
+            fortification: defendingCell.fortification,
+            cell: defendingCell
+        };
+        
+        // Pre-calculate combat result (to be used later)
+        const combatResult = CombatSystem.resolveAttack(attackingCell, defendingCell);
+        
+        // Create battle popup
+        const battleOverlay = document.createElement('div');
+        battleOverlay.className = 'popup-overlay battle-overlay';
+        battleOverlay.style.display = 'flex';
+        
+        const battlePopup = document.createElement('div');
+        battlePopup.className = 'popup battle-popup';
+        
+        // Create battle scene
+        const battleScene = document.createElement('div');
+        battleScene.className = 'battle-scene';
+        
+        // Create header
+        const header = document.createElement('div');
+        header.className = 'battle-header';
+        header.innerHTML = `
+            <div class="battle-faction" style="background-color: ${attacker.faction.color}">
+                ${attacker.faction.name}: ${attacker.troops} Troops
+            </div>
+            <div class="battle-vs">VS</div>
+            <div class="battle-faction" style="background-color: ${defender.faction.color}">
+                ${defender.faction.name}: ${defender.troops} Troops${defender.fortification > 0 ? ` + ${defender.fortification} Fortifications` : ''}
+            </div>
+        `;
+        
+        // Create battlefield
+        const battlefield = document.createElement('div');
+        battlefield.className = 'battlefield';
+        
+        // Create armies
+        const attackerArmy = document.createElement('div');
+        attackerArmy.className = 'army attacker-army';
+        
+        const defenderArmy = document.createElement('div');
+        defenderArmy.className = 'army defender-army';
+        
+        // Add soldiers to armies
+        for (let i = 0; i < attacker.troops; i++) {
+            const soldier = document.createElement('div');
+            soldier.className = 'soldier attacker-soldier';
+            soldier.style.backgroundColor = attacker.faction.color;
+            soldier.style.animationDelay = `${Math.random() * 2}s`;
+            attackerArmy.appendChild(soldier);
+        }
+        
+        // Add defenders + fortification
+        const totalDefense = defender.troops + defender.fortification;
+        for (let i = 0; i < totalDefense; i++) {
+            const soldier = document.createElement('div');
+            // Different style for fortifications
+            if (i >= defender.troops) {
+                soldier.className = 'soldier defender-soldier fortification';
+                soldier.innerHTML = '🛡️';
+            } else {
+                soldier.className = 'soldier defender-soldier';
+                soldier.style.backgroundColor = defender.faction.color;
+            }
+            soldier.style.animationDelay = `${Math.random() * 2}s`;
+            defenderArmy.appendChild(soldier);
+        }
+        
+        battlefield.appendChild(attackerArmy);
+        battlefield.appendChild(defenderArmy);
+        
+        // Status text
+        const battleStatus = document.createElement('div');
+        battleStatus.className = 'battle-status';
+        battleStatus.textContent = 'Battle in progress...';
+        
+        // Skip button
+        const skipButton = document.createElement('button');
+        skipButton.className = 'action-button';
+        skipButton.textContent = 'Skip Animation';
+        skipButton.addEventListener('click', () => endBattle());
+        
+        // Assemble battle popup
+        battleScene.appendChild(header);
+        battleScene.appendChild(battlefield);
+        battleScene.appendChild(battleStatus);
+        battleScene.appendChild(skipButton);
+        battlePopup.appendChild(battleScene);
+        battleOverlay.appendChild(battlePopup);
+        document.body.appendChild(battleOverlay);
+        
+        // Animate the battle
+        let battleTime = 0;
+        let attackerCasualties = 0;
+        let defenderCasualties = 0;
+        const totalAttackerCasualties = combatResult.attackerLosses;
+        const totalDefenderCasualties = combatResult.defenderLosses;
+        const battleDuration = 10000; // 10 seconds for full battle
+        
+        // Create clash effect
+        setTimeout(() => {
+            battlefield.classList.add('battle-clash');
+            
+            // Battle tick - remove soldiers gradually
+            const battleInterval = setInterval(() => {
+                battleTime += 100;
+                
+                // Update casualty count based on time progression
+                const battleProgress = battleTime / battleDuration;
+                const newAttackerCasualties = Math.floor(totalAttackerCasualties * battleProgress);
+                const newDefenderCasualties = Math.floor(totalDefenderCasualties * battleProgress);
+                
+                // Remove attacker soldiers
+                while (attackerCasualties < newAttackerCasualties && attackerArmy.childNodes.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * attackerArmy.childNodes.length);
+                    const soldierToRemove = attackerArmy.childNodes[randomIndex];
+                    soldierToRemove.classList.add('casualty');
+                    setTimeout(() => {
+                        if (soldierToRemove.parentNode) {
+                            soldierToRemove.parentNode.removeChild(soldierToRemove);
+                        }
+                    }, 500);
+                    attackerCasualties++;
+                }
+                
+                // Remove defender soldiers
+                while (defenderCasualties < newDefenderCasualties && defenderArmy.childNodes.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * defenderArmy.childNodes.length);
+                    const soldierToRemove = defenderArmy.childNodes[randomIndex];
+                    soldierToRemove.classList.add('casualty');
+                    setTimeout(() => {
+                        if (soldierToRemove.parentNode) {
+                            soldierToRemove.parentNode.removeChild(soldierToRemove);
+                        }
+                    }, 500);
+                    defenderCasualties++;
+                }
+                
+                // Update battle status
+                battleStatus.textContent = `Attacker: ${attacker.troops - attackerCasualties} troops | Defender: ${defender.troops - defenderCasualties} troops`;
+                
+                // End battle if time is up
+                if (battleTime >= battleDuration) {
+                    clearInterval(battleInterval);
+                    setTimeout(() => endBattle(), 1000);
+                }
+            }, 100);
+        }, 1000);
+        
+        // Function to end battle and apply results
+        const endBattle = () => {
+            // Apply combat results to the actual game
+            attackingCell.troops -= combatResult.attackerLosses;
+            defendingCell.troops -= combatResult.defenderLosses;
+            
+            // Handle conquest
+            if (combatResult.attackerWins) {
+                const previousOwner = defendingCell.ownerId;
+                defendingCell.ownerId = this.game.getCurrentFaction().id;
+                defendingCell.troops = combatResult.attackerRemaining;
+                attackingCell.troops = 0;
+                
+                this.addMessage(`Conquered cell (${defendingCell.x}, ${defendingCell.y}) from ${previousOwner >= 0 ? `Faction ${previousOwner + 1}` : 'Neutral'}.`);
+                battlefield.classList.add('attacker-wins');
+            } else {
+                this.addMessage(`Attack on cell (${defendingCell.x}, ${defendingCell.y}) failed.`);
+                battlefield.classList.add('defender-wins');
+            }
+            
+            // Update battle status with final result
+            battleStatus.textContent = combatResult.attackerWins ? 
+                `Victory! You conquered the territory with ${combatResult.attackerRemaining} troops remaining.` : 
+                `Defeat! The defender repelled your attack. They have ${combatResult.defenderRemaining} troops left.`;
+            
+            // Change skip button to continue
+            skipButton.textContent = 'Continue';
+            skipButton.addEventListener('click', () => {
+                document.body.removeChild(battleOverlay);
+                
+                // Update cells
+                defendingCell.updateElement();
+                attackingCell.updateElement();
+                this.targetCell = null;
+                this.updateUI();
+            }, { once: true });
+            
+            // Update cells visually
+            defendingCell.updateElement();
+            attackingCell.updateElement();
+            this.updateUI();
+        };
+    }
 }
