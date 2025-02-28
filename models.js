@@ -1,3 +1,4 @@
+// models.js
 // Grid and Cell classes
 class Grid {
     constructor(size) {

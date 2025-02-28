@@ -1,7 +1,7 @@
 class Game {
     constructor() {
         // Create grid (8x8)
-        this.grid = new Grid(8);
+        this.grid = new Grid(6);
         
         // Create factions
         this.factions = [
