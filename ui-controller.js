@@ -14,7 +14,6 @@ class UIController {
         this.populationAmountElement = document.getElementById('populationAmount');
         this.turnCounterElement = document.getElementById('turnCounter');
         this.messagesElement = document.getElementById('messages');
-        this.endTurnBtn = document.getElementById('endTurnBtn');
         this.messageLogElement = document.getElementById('messageLog');
         this.toggleLogBtn = document.getElementById('toggleLogBtn');
         
@@ -60,9 +59,6 @@ class UIController {
             
             this.handleCellSelection(cell);
         });
-        
-        // End turn button
-        this.endTurnBtn.addEventListener('click', () => this.handleEndTurn());
         
         // Close popup button
         this.closePopupButton.addEventListener('click', () => {
@@ -182,6 +178,22 @@ class UIController {
         this.actionButtonsElement.appendChild(upgradeMaterialsBtn);
         this.actionButtonsElement.appendChild(upgradeGoldBtn);
         this.actionButtonsElement.appendChild(fortifyBtn);
+        
+        // Add End Turn button
+        const endTurnBtn = document.createElement('button');
+        endTurnBtn.className = 'action-button end-turn-button';
+        endTurnBtn.textContent = 'End Turn';
+        endTurnBtn.addEventListener('click', () => {
+            this.handleEndTurn();
+            this.cellPopupElement.style.display = 'none';
+        });
+        
+        // Add some spacing before the end turn button
+        const divider = document.createElement('div');
+        divider.style.margin = '10px 0';
+        divider.style.borderBottom = '1px solid #eee';
+        this.actionButtonsElement.appendChild(divider);
+        this.actionButtonsElement.appendChild(endTurnBtn);
         
         // Show popup
         this.cellPopupElement.style.display = 'flex';
