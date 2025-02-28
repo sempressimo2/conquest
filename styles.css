@@ -140,7 +140,7 @@ body {
     display: block;
     width: 100%;
     padding: 12px;
-    background-color: #4caf50;
+    background-color: #4caf50 !important; /* Added !important to override other styles */
     color: white;
     border: none;
     border-radius: 10px;
@@ -149,6 +149,10 @@ body {
     font-size: 16px;
     margin-bottom: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.end-turn-button:hover {
+    background-color: #45a049 !important;
 }
 
 /* Popup styles */
@@ -263,4 +267,32 @@ body {
     border: none;
     font-size: 16px;
     cursor: pointer;
+}
+
+.turn-start-popup {
+    text-align: center;
+}
+
+.turn-start-content {
+    padding: 15px 0;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.turn-summary {
+    text-align: left;
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.turn-summary h4 {
+    margin: 10px 0 5px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.turn-summary p {
+    margin: 8px 0;
 }

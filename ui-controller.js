@@ -363,7 +363,71 @@ class UIController {
             this.selectedCell = null;
             this.targetCell = null;
             this.updateUI();
+            
+            // Show turn start popup
+            this.showTurnStartPopup();
         }
+    }
+    
+    showTurnStartPopup() {
+        const currentFaction = this.game.getCurrentFaction();
+        const totalCells = this.game.grid.getCellsByFaction(currentFaction.id).length;
+        const totalTroops = currentFaction.getTotalTroops(this.game.grid);
+        const totalPopulation = currentFaction.getTotalPopulation(this.game.grid);
+        
+        // Create popup overlay
+        const popupOverlay = document.createElement('div');
+        popupOverlay.className = 'popup-overlay';
+        popupOverlay.style.display = 'flex';
+        
+        // Create popup content
+        const popup = document.createElement('div');
+        popup.className = 'popup turn-start-popup';
+        
+        // Create header with faction color
+        const header = document.createElement('div');
+        header.className = 'popup-header';
+        header.innerHTML = `
+            <div class="popup-title">
+                <div class="faction-color" style="background-color: ${currentFaction.color}; display: inline-block; margin-right: 10px;"></div>
+                ${currentFaction.name}'s Turn
+            </div>
+        `;
+        
+        // Create content
+        const content = document.createElement('div');
+        content.className = 'turn-start-content';
+        content.innerHTML = `
+            <h3>Turn ${this.game.gameState.turn}</h3>
+            <div class="turn-summary">
+                <p><strong>⚡ Actions Available:</strong> ${currentFaction.actionsRemaining}</p>
+                <p><strong>🏙️ Territories:</strong> ${totalCells}</p>
+                <p><strong>⚔️ Total Troops:</strong> ${totalTroops}</p>
+                <p><strong>👥 Total Population:</strong> ${totalPopulation}</p>
+                <h4>Resources:</h4>
+                <p>🍎 Food: ${currentFaction.resources.food}</p>
+                <p>🧱 Materials: ${currentFaction.resources.materials}</p>
+                <p>💰 Gold: ${currentFaction.resources.gold}</p>
+            </div>
+        `;
+        
+        // Create start button
+        const startButton = document.createElement('button');
+        startButton.className = 'action-button end-turn-button';
+        startButton.textContent = 'Start Turn';
+        startButton.style.backgroundColor = '#4caf50';
+        startButton.addEventListener('click', () => {
+            document.body.removeChild(popupOverlay);
+        });
+        
+        // Assemble popup
+        popup.appendChild(header);
+        popup.appendChild(content);
+        popup.appendChild(startButton);
+        popupOverlay.appendChild(popup);
+        
+        // Add to DOM
+        document.body.appendChild(popupOverlay);
     }
     
     updateUI() {
