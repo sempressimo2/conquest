@@ -411,23 +411,6 @@ body {
     color: #721c24;
 }
 
-/* Add to styles.css */
-.production-info {
-    background-color: #f8f9fa;
-    padding: 8px;
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
-.production-info h4 {
-    margin: 0 0 5px 0;
-    font-size: 14px;
-}
-
-.production-info p {
-    margin: 3px 0;
-}
-
 /* Animations */
 @keyframes marching-right {
     0%, 100% { transform: translateX(0) translateY(0); }

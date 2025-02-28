@@ -129,19 +129,11 @@ class UIController {
         if (cell.resourceType === 'gold') resourceType = "Gold";
         
         this.cellDetailsElement.innerHTML = `
-            <p><strong>Owner:</strong> ${owner}</p>
-            <p><strong>Population:</strong> ${cell.population}/${cell.populationCapacity}</p>
-            <p><strong>Troops:</strong> ${cell.troops}</p>
-            <p><strong>Fortification:</strong> ${cell.fortification}</p>
-            <p><strong>Resource Type:</strong> ${resourceType} (Level ${cell.resourceLevel})</p>
-            
-            <!-- Add this new section -->
-            <div class="production-info">
-                <h4>Production Per Turn:</h4>
-                <p>🍎 Food: ${resourceProduction.food}</p>
-                <p>🧱 Materials: ${resourceProduction.materials}</p>
-                <p>💰 Gold: ${resourceProduction.gold}</p>
-            </div>
+            <p><strong>👥 Population:</strong> ${cell.population}/${cell.populationCapacity}</p>
+            <p><strong>⚔️ Troops:</strong> ${cell.troops}</p>
+            <p><strong>🛡️ Fortification:</strong> ${cell.fortification}</p>
+            <p><strong>${this.getResourceIcon(cell.resourceType)} Resource Type:</strong> ${resourceType} (Level ${cell.resourceLevel})</p>
+            <p><strong>⚡ Actions Remaining:</strong> ${currentFaction.actionsRemaining}</p>
         `;
         
         // Action buttons
@@ -402,15 +394,6 @@ class UIController {
             </div>
         `;
         
-        // Calculate total production
-        let totalProduction = { food: 0, materials: 0, gold: 0 };
-        for (const cell of this.game.grid.getCellsByFaction(currentFaction.id)) {
-            const cellProduction = cell.getResourceProduction();
-            totalProduction.food += cellProduction.food;
-            totalProduction.materials += cellProduction.materials;
-            totalProduction.gold += cellProduction.gold;
-        }
-
         // Create content
         const content = document.createElement('div');
         content.className = 'turn-start-content';
@@ -421,13 +404,6 @@ class UIController {
                 <p><strong>🏙️ Territories:</strong> ${totalCells}</p>
                 <p><strong>⚔️ Total Troops:</strong> ${totalTroops}</p>
                 <p><strong>👥 Total Population:</strong> ${totalPopulation}</p>
-                
-                <!-- Add this new section -->
-                <h4>Production This Turn:</h4>
-                <p>🍎 Food: +${totalProduction.food}</p>
-                <p>🧱 Materials: +${totalProduction.materials}</p>
-                <p>💰 Gold: +${totalProduction.gold}</p>
-                
                 <h4>Resources:</h4>
                 <p>🍎 Food: ${currentFaction.resources.food}</p>
                 <p>🧱 Materials: ${currentFaction.resources.materials}</p>
