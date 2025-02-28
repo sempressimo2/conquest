@@ -467,6 +467,26 @@ class UIController {
     }
     
     showBattleVisualization(attackingCell, defendingCell) {
+        // Check if it's a neutral territory with 0 troops - skip animation
+        if (defendingCell.ownerId === -1 && defendingCell.troops === 0) {
+            // Calculate result (will be always a win)
+            const combatResult = CombatSystem.resolveAttack(attackingCell, defendingCell);
+            
+            // Apply results directly
+            defendingCell.ownerId = this.game.getCurrentFaction().id;
+            defendingCell.troops = attackingCell.troops; // All troops move to new territory
+            attackingCell.troops = 0;
+            
+            // Update UI
+            this.addMessage(`Conquered neutral cell (${defendingCell.x}, ${defendingCell.y}) without resistance.`);
+            defendingCell.updateElement();
+            attackingCell.updateElement();
+            this.targetCell = null;
+            this.updateUI();
+            
+            return; // Exit the function without showing battle animation
+        }
+    
         const attacker = {
             faction: this.game.factions[attackingCell.ownerId],
             troops: attackingCell.troops,
