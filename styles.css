@@ -296,3 +296,152 @@ body {
 .turn-summary p {
     margin: 8px 0;
 }
+
+/* Add to styles.css */
+.battle-popup {
+    width: 95%;
+    max-width: 400px;
+    text-align: center;
+    padding: 0;
+    overflow: hidden;
+}
+
+.battle-scene {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.battle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+}
+
+.battle-faction {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.battle-vs {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.battlefield {
+    height: 250px;
+    background-image: url('https://via.placeholder.com/400x250/333/666?text=Battlefield');
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+.army {
+    width: 40%;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    padding: 10px;
+}
+
+.attacker-army {
+    justify-content: flex-end;
+}
+
+.defender-army {
+    justify-content: flex-start;
+}
+
+.soldier {
+    width: 20px;
+    height: 20px;
+    margin: 3px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.attacker-soldier {
+    animation: marching-right 2s infinite;
+}
+
+.defender-soldier {
+    animation: marching-left 2s infinite;
+}
+
+.battle-clash .attacker-soldier {
+    animation: fighting-right 1s infinite;
+}
+
+.battle-clash .defender-soldier {
+    animation: fighting-left 1s infinite;
+}
+
+.fortification {
+    border-radius: 0;
+    font-size: 18px;
+    background-color: transparent !important;
+}
+
+.casualty {
+    animation: casualty 0.5s forwards !important;
+}
+
+.battle-status {
+    padding: 10px;
+    font-weight: bold;
+    background-color: #f5f5f5;
+}
+
+.attacker-wins .battle-status {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.defender-wins .battle-status {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Animations */
+@keyframes marching-right {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    25% { transform: translateX(3px) translateY(-5px); }
+    50% { transform: translateX(7px) translateY(0); }
+    75% { transform: translateX(3px) translateY(5px); }
+}
+
+@keyframes marching-left {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    25% { transform: translateX(-3px) translateY(-5px); }
+    50% { transform: translateX(-7px) translateY(0); }
+    75% { transform: translateX(-3px) translateY(5px); }
+}
+
+@keyframes fighting-right {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(10px) rotate(15deg); }
+    50% { transform: translateX(5px) rotate(-10deg); }
+    75% { transform: translateX(15px) rotate(5deg); }
+}
+
+@keyframes fighting-left {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(-10px) rotate(-15deg); }
+    50% { transform: translateX(-5px) rotate(10deg); }
+    75% { transform: translateX(-15px) rotate(-5deg); }
+}
+
+@keyframes casualty {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.7; }
+    100% { transform: scale(0); opacity: 0; }
+}
