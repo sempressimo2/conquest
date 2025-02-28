@@ -220,4 +220,157 @@ class UIController {
     showCellInfoPopup(cell) {
         let owner = "Neutral";
         if (cell.ownerId >= 0) {
-            owner = `Faction ${cell.ownerI
+            owner = `Faction ${cell.ownerId + 1}`;
+        }
+        
+        this.popupTitleElement.textContent = `Cell Info (${cell.x}, ${cell.y})`;
+        
+        // Cell details
+        let resourceType = "Balanced";
+        if (cell.resourceType === 'food') resourceType = "Food";
+        if (cell.resourceType === 'materials') resourceType = "Materials";
+        if (cell.resourceType === 'gold') resourceType = "Gold";
+        
+        this.cellDetailsElement.innerHTML = `
+            <p><strong>Owner:</strong> ${owner}</p>
+            <p><strong>Population:</strong> ${cell.population}/${cell.populationCapacity}</p>
+            <p><strong>Troops:</strong> ${cell.troops}</p>
+            <p><strong>Fortification:</strong> ${cell.fortification}</p>
+            <p><strong>Resource Type:</strong> ${resourceType} (Level ${cell.resourceLevel})</p>
+        `;
+        
+        // No action buttons for enemy/neutral cell
+        this.actionButtonsElement.innerHTML = '';
+        
+        // Show popup
+        this.cellPopupElement.style.display = 'flex';
+    }
+    
+    createActionButton(text, disabled, clickHandler) {
+        const button = document.createElement('button');
+        button.className = 'action-button';
+        button.textContent = text;
+        button.disabled = disabled;
+        
+        if (!disabled) {
+            button.addEventListener('click', () => {
+                clickHandler();
+                this.cellPopupElement.style.display = 'none';
+            });
+        }
+        
+        return button;
+    }
+    
+    handleRecruit() {
+        if (!this.selectedCell || !this.game.getCurrentFaction().useAction()) return;
+        
+        const cost = { food: 10, materials: 0, gold: 0 };
+        if (!this.game.getCurrentFaction().pay(cost)) {
+            this.addMessage("Not enough resources to recruit troops.");
+            return;
+        }
+        
+        const troopsRecruited = this.selectedCell.recruitTroops(5);
+        this.addMessage(`Recruited ${troopsRecruited} troops in cell (${this.selectedCell.x}, ${this.selectedCell.y}).`);
+        this.updateUI();
+    }
+    
+    handleUpgradeResource(type) {
+        if (!this.selectedCell || !this.game.getCurrentFaction().useAction()) return;
+        
+        const cost = { food: 0, materials: 10, gold: 0 };
+        if (!this.game.getCurrentFaction().pay(cost)) {
+            this.addMessage("Not enough resources to upgrade.");
+            return;
+        }
+        
+        this.selectedCell.upgradeResource(type);
+        this.addMessage(`Upgraded cell (${this.selectedCell.x}, ${this.selectedCell.y}) to produce more ${type}.`);
+        this.updateUI();
+    }
+    
+    handleFortify() {
+        if (!this.selectedCell || !this.game.getCurrentFaction().useAction()) return;
+        
+        const cost = { food: 0, materials: 15, gold: 0 };
+        if (!this.game.getCurrentFaction().pay(cost)) {
+            this.addMessage("Not enough resources to fortify.");
+            return;
+        }
+        
+        this.selectedCell.upgradeFortification();
+        this.addMessage(`Fortified cell (${this.selectedCell.x}, ${this.selectedCell.y}).`);
+        this.updateUI();
+    }
+    
+    handleAttack() {
+        if (!this.selectedCell || !this.targetCell || this.selectedCell.troops === 0 || !this.game.getCurrentFaction().useAction()) return;
+        
+        const result = CombatSystem.resolveAttack(this.selectedCell, this.targetCell);
+        
+        // Update troops
+        this.selectedCell.troops -= result.attackerLosses;
+        this.targetCell.troops -= result.defenderLosses;
+        
+        // Handle conquest
+        if (result.attackerWins) {
+            const previousOwner = this.targetCell.ownerId;
+            this.targetCell.ownerId = this.game.getCurrentFaction().id;
+            this.targetCell.troops = result.attackerRemaining;
+            this.selectedCell.troops = 0;
+            
+            this.addMessage(`Conquered cell (${this.targetCell.x}, ${this.targetCell.y}) from ${previousOwner >= 0 ? `Faction ${previousOwner + 1}` : 'Neutral'}.`);
+        } else {
+            this.addMessage(`Attack on cell (${this.targetCell.x}, ${this.targetCell.y}) failed.`);
+        }
+        
+        this.targetCell.updateElement();
+        this.selectedCell.updateElement();
+        this.targetCell = null;
+        this.updateUI();
+    }
+    
+    handleEndTurn() {
+        const turnInfo = this.game.nextTurn();
+        
+        if (turnInfo.gameOver) {
+            alert(`Game over! ${turnInfo.winner.name} has won!`);
+            // You might want to reset the game or show a game over screen
+        } else {
+            this.addMessage(`Turn ${turnInfo.turn} - ${turnInfo.faction.name}'s turn.`);
+            this.selectedCell = null;
+            this.targetCell = null;
+            this.updateUI();
+        }
+    }
+    
+    updateUI() {
+        const currentFaction = this.game.getCurrentFaction();
+        
+        // Update faction info
+        this.currentFactionColorElement.style.backgroundColor = currentFaction.color;
+        this.currentFactionNameElement.textContent = currentFaction.name;
+        
+        // Update resource display
+        this.foodAmountElement.textContent = currentFaction.resources.food;
+        this.materialAmountElement.textContent = currentFaction.resources.materials;
+        this.goldAmountElement.textContent = currentFaction.resources.gold;
+        this.populationAmountElement.textContent = currentFaction.getTotalPopulation(this.game.grid);
+        
+        // Update turn counter
+        this.turnCounterElement.textContent = this.game.turn;
+    }
+    
+    addMessage(message) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message';
+        messageElement.textContent = message;
+        this.messagesElement.appendChild(messageElement);
+        this.messagesElement.scrollTop = this.messagesElement.scrollHeight;
+        
+        // Show log if it's collapsed
+        this.messageLogElement.classList.remove('collapsed');
+        this.toggleLogBtn.textContent = '▲';
+    }
+}
